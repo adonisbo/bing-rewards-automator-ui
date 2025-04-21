@@ -6,20 +6,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <title>Bing 自动化助手 (克隆版)</title>
 
+    <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="img/favicon.ico">
 
+    <!-- 引入 Roboto 字体 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
+    <!-- 引入 Font Awesome 6 CSS (使用较新版本并添加 integrity 属性) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <!-- 引入 Bootstrap 5 CSS (使用较新版本并添加 integrity 属性) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
 
+    <!-- 引入我们自己的 CSS 文件 -->
     <link type="text/css" rel="stylesheet" href="style.css" />
+
 </head>
 <body>
-    <!-- 新增: API Key 输入区域 -->
+    <!-- API Key 输入区域 -->
     <div id="api-key-section" class="container-fluid text-end p-2" style="position: absolute; top: 0; right: 0; z-index: 10;">
          <span class="api-key-label small me-1">绑定 Google AI API:</span>
          <input type="password" id="google-api-key-input" class="api-key-input form-control-sm d-inline-block w-auto" placeholder="输入您的 API Key">
@@ -28,7 +34,8 @@
              <label class="form-check-label api-key-label" for="remember-api-key">记住</label>
          </div>
          <button type="button" id="btn-set-api-key" class="btn btn-sm btn-primary api-key-button">确定</button>
-         <button type="button" id="btn-clear-api-key" class="btn btn-sm btn-outline-secondary api-key-button ms-1" title="清除已记住的 API Key">清除</button> <!-- 新增清除按钮 -->
+         <button type="button" id="btn-clear-api-key" class="btn btn-sm btn-outline-secondary api-key-button ms-1" title="清除已记住的 API Key">清除</button>
+         <span id="api-key-status" class="api-key-label ms-2"></span> <!-- 状态提示区域 -->
     </div>
 
     <section id="wrapper" class="m-auto text-center">
@@ -38,12 +45,14 @@
 
         <main>
             <div>
-                <button type="button" id="btn-start" class="btn btn-lg action-button start-button">
+                <!-- 开始按钮，初始状态可能根据 JS 判断是否禁用 -->
+                <button type="button" id="btn-start" class="btn btn-lg action-button start-button" disabled> <!-- 初始设置为 disabled -->
                     <i class="fas fa-play-circle"></i>
                     <strong>点击开始自动搜索</strong>
                     <hr />
                     <div id="div-settings">加载搜索设置中...</div>
                 </button>
+                <!-- 停止按钮，初始隐藏 -->
                 <button type="button" id="btn-stop" class="btn btn-lg action-button stop-button" style="display: none;">
                     <i class="fas fa-stop-circle"></i>
                     <strong>点击停止自动搜索 <span id="span-progress">(0/35)</span></strong>
@@ -51,6 +60,7 @@
                     <div id="div-timer">加载自动搜索计时器...</div>
                 </button>
             </div>
+            <!-- 用于单标签模式的隐藏 iframe 容器 -->
             <div id="div-bing"></div>
         </main>
 
@@ -80,7 +90,7 @@
                         </p>
                     </div>
 
-                     <!-- 新增: API Key 相关提示 -->
+                     <!-- API Key 相关提示 -->
                      <div class="alert alert-warning small" role="alert">
                          <strong>动态词库需要 Google AI API Key:</strong>
                          <ul>
@@ -146,8 +156,8 @@
         </div>
     </div>
 
-    <!-- 引入 Bootstrap 5 JS Bundle (包含 Popper) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <!-- 引入 Bootstrap 5 JS Bundle (使用较新版本并添加 integrity 属性) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     <!-- 引入我们自己的 JS 文件 (使用 defer) -->
     <script type="text/javascript" src="script.js" defer></script>
 </body>

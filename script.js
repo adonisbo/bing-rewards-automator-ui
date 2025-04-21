@@ -285,7 +285,7 @@ const BING_AUTOMATOR = {
                 runDisplayUpdater: () => {
                     if (BING_AUTOMATOR.search.engine.timer.intervalId) { clearInterval(BING_AUTOMATOR.search.engine.timer.intervalId); }
                     BING_AUTOMATOR.search.engine.timer.intervalId = setInterval(() => {
-                        if (!BING_AUTOMATOR.search.isRunning) { // 修改: 增加检查
+                        if (!BING_AUTOMATOR.search.isRunning) {
                             clearInterval(BING_AUTOMATOR.search.engine.timer.intervalId);
                             BING_AUTOMATOR.search.engine.timer.intervalId = null;
                             if (BING_AUTOMATOR.elements.div.timer) BING_AUTOMATOR.elements.div.timer.innerHTML = `自动搜索已完成或停止`;
@@ -303,7 +303,6 @@ const BING_AUTOMATOR = {
                             timerText += `, 预计剩余 ${BING_AUTOMATOR.search.engine.timer.toClockFormat(completeMs, true)}`;
                         } else if (completeMs !== null && completeMs < 0) {
                              timerText += `正在完成最后的搜索...`;
-                             // 不在这里停止计时器
                         } else {
                              timerText += `随机间隔模式，无法预估完成时间`;
                         }
@@ -334,7 +333,7 @@ const BING_AUTOMATOR = {
                              alert("浏览器阻止了弹出窗口，请允许本站点的弹出窗口以使用多标签模式。将切换回单标签模式。");
                              if(BING_AUTOMATOR.elements.select.multitab) BING_AUTOMATOR.elements.select.multitab.value = "false";
                              BING_AUTOMATOR.cookies.set("_multitab_mode", "false");
-                             BING_AUTOMATOR.search.stop(); // 调用停止
+                             BING_AUTOMATOR.search.stop();
                         }
                     } catch (e) { console.error("Error opening search window:", e); }
                 },
@@ -435,14 +434,14 @@ const BING_AUTOMATOR = {
         if (!BING_AUTOMATOR.search.isRunning || index > BING_AUTOMATOR.search.limit) {
             if (BING_AUTOMATOR.search.isRunning && index > BING_AUTOMATOR.search.limit) {
                 console.log(`Search limit reached (index ${index} > limit ${BING_AUTOMATOR.search.limit}). Calling stop(true).`);
-                BING_AUTOMATOR.search.stop(true);
+                BING_AUTOMATOR.search.stop(true); // 调用停止，传入 true 表示正常完成
             } else if (!BING_AUTOMATOR.search.isRunning) {
                  console.log("Search stopped externally (isRunning is false).");
-                 BING_AUTOMATOR.search.engine.timer.stopDisplayUpdater();
+                 BING_AUTOMATOR.search.engine.timer.stopDisplayUpdater(); // 仅停止计时器显示
             } else {
                  console.warn(`executeSearch stopping condition met but not handled as expected. index: ${index}, isRunning: ${BING_AUTOMATOR.search.isRunning}`);
             }
-            return;
+            return; // 结束执行
         }
         const term = BING_AUTOMATOR.search.getRandomSearchTerm();
         if (term === null) { console.warn(`No more unique words available at search ${index}. Stopping.`); alert(`临时词库已用完（共 ${BING_AUTOMATOR.temporaryWordList.length} 个），搜索提前结束。`); BING_AUTOMATOR.search.stop(true); return; }
@@ -497,7 +496,7 @@ const BING_AUTOMATOR = {
             console.log("Closed open search window (if any).");
         }
 
-        BING_AUTOMATOR.search.engine.timer.stopDisplayUpdater();
+        BING_AUTOMATOR.search.engine.timer.stopDisplayUpdater(); // 确保停止计时器显示
         console.log("Stopped timer display updater.");
 
         // 更新按钮状态

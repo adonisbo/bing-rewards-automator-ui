@@ -333,7 +333,7 @@ const BING_AUTOMATOR = {
                              alert("浏览器阻止了弹出窗口，请允许本站点的弹出窗口以使用多标签模式。将切换回单标签模式。");
                              if(BING_AUTOMATOR.elements.select.multitab) BING_AUTOMATOR.elements.select.multitab.value = "false";
                              BING_AUTOMATOR.cookies.set("_multitab_mode", "false");
-                             BING_AUTOMATOR.search.stop();
+                             BING_AUTOMATOR.search.stop(); // 调用停止
                         }
                     } catch (e) { console.error("Error opening search window:", e); }
                 },
@@ -431,20 +431,20 @@ const BING_AUTOMATOR = {
     executeSearch: (index = 1) => {
         console.log(`Entering executeSearch with index: ${index}, limit: ${BING_AUTOMATOR.search.limit}, isRunning: ${BING_AUTOMATOR.search.isRunning}`);
 
-        if (!BING_AUTOMATOR.search.isRunning || index > BING_AUTOMATOR.search.limit) {
-            if (BING_AUTOMATOR.search.isRunning && index > BING_AUTOMATOR.search.limit) {
-                console.log(`Search limit reached (index ${index} > limit ${BING_AUTOMATOR.search.limit}). Calling stop(true).`);
-                BING_AUTOMATOR.search.stop(true); // 调用停止，传入 true 表示正常完成
-            } else if (!BING_AUTOMATOR.search.isRunning) {
-                 console.log("Search stopped externally (isRunning is false).");
-                 BING_AUTOMATOR.search.engine.timer.stopDisplayUpdater(); // 仅停止计时器显示
-            } else {
-                 console.warn(`executeSearch stopping condition met but not handled as expected. index: ${index}, isRunning: ${BING_AUTOMATOR.search.isRunning}`);
-            }
-            return; // 结束执行
+        // 修改: 将停止检查放在前面
+        if (!BING_AUTOMATOR.search.isRunning) {
+             console.log("Search stopped externally (isRunning is false). Stopping timer display.");
+             BING_AUTOMATOR.search.engine.timer.stopDisplayUpdater();
+             return;
         }
+        if (index > BING_AUTOMATOR.search.limit) {
+            console.log(`Search limit reached (index ${index} > limit ${BING_AUTOMATOR.search.limit}). Calling search.stop(true).`);
+            BING_AUTOMATOR.search.stop(true); // *** 修改: 调用 search 对象下的 stop ***
+            return;
+        }
+
         const term = BING_AUTOMATOR.search.getRandomSearchTerm();
-        if (term === null) { console.warn(`No more unique words available at search ${index}. Stopping.`); alert(`临时词库已用完（共 ${BING_AUTOMATOR.temporaryWordList.length} 个），搜索提前结束。`); BING_AUTOMATOR.search.stop(true); return; }
+        if (term === null) { console.warn(`No more unique words available at search ${index}. Stopping.`); alert(`临时词库已用完（共 ${BING_AUTOMATOR.temporaryWordList.length} 个），搜索提前结束。`); BING_AUTOMATOR.search.stop(true); return; } // *** 修改: 调用 search 对象下的 stop ***
         const formParam = BING_AUTOMATOR.search.getRandomFormParam();
         const url = `https://www.bing.com/search?q=${encodeURIComponent(term.toLowerCase())}&FORM=${formParam}`;
         const interval = BING_AUTOMATOR.search.interval;
@@ -456,70 +456,16 @@ const BING_AUTOMATOR = {
         if(index === 1) { BING_AUTOMATOR.search.engine.timer.runDisplayUpdater(); }
         if (BING_AUTOMATOR.search.multitab) { BING_AUTOMATOR.search.engine.output.openWindow(url, interval); }
         else { BING_AUTOMATOR.search.engine.output.addIframe(url, term, index); }
-        BING_AUTOMATOR.search.currentTimeoutId = setTimeout(() => {
-            BING_AUTOMATOR.executeSearch(index + 1);
-        }, nextDelay);
-    },
 
-    // 开始搜索
-    start: () => {
-        console.log("Start button clicked, executing BING_AUTOMATOR.start...");
-        if (BING_AUTOMATOR.search.isRunning) { console.log("Search is already running."); return; }
-        if (!BING_AUTOMATOR.elements.button.start || !BING_AUTOMATOR.elements.button.stop) { console.error("Start or Stop button not found."); return; }
-        if (!BING_AUTOMATOR.temporaryWordList || BING_AUTOMATOR.temporaryWordList.length === 0) { alert("请先设置有效的 Google AI API Key 并等待临时词库生成成功后再开始搜索。"); console.error("Cannot start search: Temporary word list is empty."); return; }
-
-        console.log("Starting auto search...");
-        BING_AUTOMATOR.search.isRunning = true;
-        BING_AUTOMATOR.availableWordsThisSession = [...BING_AUTOMATOR.temporaryWordList];
-        console.log(`Using a pool of ${BING_AUTOMATOR.availableWordsThisSession.length} words for this session.`);
-
-        BING_AUTOMATOR.elements.button.start.style.display = "none";
-        BING_AUTOMATOR.elements.button.stop.style.display = "inline-block";
-        if (BING_AUTOMATOR.search.currentTimeoutId) { clearTimeout(BING_AUTOMATOR.search.currentTimeoutId); }
-        BING_AUTOMATOR.search.engine.timer.stopDisplayUpdater();
-        BING_AUTOMATOR.executeSearch(1);
-    },
-
-    // 停止搜索 (修改: 实现完成时跳转)
-    stop: (completed = false) => {
-        console.log(`Stopping auto search... Completed: ${completed}`);
-        BING_AUTOMATOR.search.isRunning = false;
-
-        if (BING_AUTOMATOR.search.currentTimeoutId) {
-            clearTimeout(BING_AUTOMATOR.search.currentTimeoutId);
-            BING_AUTOMATOR.search.currentTimeoutId = null;
-            console.log("Cleared scheduled next search timeout.");
-        }
-        if (BING_AUTOMATOR.search.searchWindow && !BING_AUTOMATOR.search.searchWindow.closed) {
-            BING_AUTOMATOR.search.searchWindow.close();
-            BING_AUTOMATOR.search.searchWindow = null;
-            console.log("Closed open search window (if any).");
-        }
-
-        BING_AUTOMATOR.search.engine.timer.stopDisplayUpdater(); // 确保停止计时器显示
-        console.log("Stopped timer display updater.");
-
-        // 更新按钮状态
-        if (BING_AUTOMATOR.elements.button.start && BING_AUTOMATOR.elements.button.stop) {
-            BING_AUTOMATOR.elements.button.start.style.display = "inline-block";
-            BING_AUTOMATOR.elements.button.stop.style.display = "none";
-            BING_AUTOMATOR.elements.button.start.disabled = (!BING_AUTOMATOR.temporaryWordList || BING_AUTOMATOR.temporaryWordList.length === 0);
-            console.log(`Stop function: Start button final state (disabled: ${BING_AUTOMATOR.elements.button.start.disabled})`);
-        }
-
-        // --- 修改: 根据 completed 参数决定后续操作 ---
-        if (completed) {
-            // 正常完成所有搜索次数
-            console.log("Search completed normally. Redirecting to points breakdown page...");
-            // 直接将当前窗口重定向到积分页面
-            window.location.href = "https://rewards.bing.com/status/pointsbreakdown";
+        // 只有在搜索仍在进行时才设置下一个 Timeout
+        if (BING_AUTOMATOR.search.isRunning) {
+             console.log(`Setting timeout for next search (index ${index + 1}) with delay ${nextDelay}ms`);
+             BING_AUTOMATOR.search.currentTimeoutId = setTimeout(() => {
+                 BING_AUTOMATOR.executeSearch(index + 1); // 保持调用顶层的 executeSearch
+             }, nextDelay);
         } else {
-            // 手动点击停止按钮
-            console.log("Search stopped manually. Reloading page...");
-            // 手动停止时，刷新当前页面以重置状态
-            location.reload();
+             console.log("Search stopped before setting next timeout.");
         }
-        // ---------------------------------------------
     },
 
     // 更新设置显示
@@ -564,38 +510,35 @@ const BING_AUTOMATOR = {
             // 修改: 先绑定事件监听器
             BING_AUTOMATOR.elements.select.limit.addEventListener("change", () => {
                 const newLimit = parseInt(BING_AUTOMATOR.elements.select.limit.value, 10);
-                BING_AUTOMATOR.search.limit = newLimit; // 直接更新内存中的值
-                BING_AUTOMATOR.cookies.set("_search_limit", newLimit.toString()); // 保存 Cookie
-                BING_AUTOMATOR.updateSettingsDisplay(); // 更新界面显示
+                BING_AUTOMATOR.search.limit = newLimit;
+                BING_AUTOMATOR.cookies.set("_search_limit", newLimit.toString());
+                BING_AUTOMATOR.updateSettingsDisplay();
                 console.log(`Search limit changed to: ${newLimit}`);
             });
             BING_AUTOMATOR.elements.select.interval.addEventListener("change", () => {
                 const newInterval = parseInt(BING_AUTOMATOR.elements.select.interval.value, 10);
-                BING_AUTOMATOR.search.interval = newInterval; // 直接更新内存中的值
-                BING_AUTOMATOR.cookies.set("_search_interval", newInterval.toString()); // 保存 Cookie
-                BING_AUTOMATOR.updateSettingsDisplay(); // 更新界面显示
+                BING_AUTOMATOR.search.interval = newInterval;
+                BING_AUTOMATOR.cookies.set("_search_interval", newInterval.toString());
+                BING_AUTOMATOR.updateSettingsDisplay();
                 console.log(`Search interval changed to: ${newInterval}`);
             });
             BING_AUTOMATOR.elements.select.multitab.addEventListener("change", () => {
                 const newMultitab = (BING_AUTOMATOR.elements.select.multitab.value === "true");
-                BING_AUTOMATOR.search.multitab = newMultitab; // 直接更新内存中的值
-                BING_AUTOMATOR.cookies.set("_multitab_mode", newMultitab.toString()); // 保存 Cookie
-                BING_AUTOMATOR.updateSettingsDisplay(); // 更新界面显示
+                BING_AUTOMATOR.search.multitab = newMultitab;
+                BING_AUTOMATOR.cookies.set("_multitab_mode", newMultitab.toString());
+                BING_AUTOMATOR.updateSettingsDisplay();
                 console.log(`Multitab mode changed to: ${newMultitab}`);
             });
-            BING_AUTOMATOR.elements.button.start.addEventListener("click", BING_AUTOMATOR.start);
-            BING_AUTOMATOR.elements.button.stop.addEventListener("click", () => BING_AUTOMATOR.stop(false)); // 手动停止传入 false
+            BING_AUTOMATOR.elements.button.start.addEventListener("click", BING_AUTOMATOR.search.start); // *** 修改: 调用 search.start ***
+            BING_AUTOMATOR.elements.button.stop.addEventListener("click", () => BING_AUTOMATOR.search.stop(false)); // *** 修改: 调用 search.stop ***
             BING_AUTOMATOR.elements.button.setApiKey.addEventListener("click", BING_AUTOMATOR.apiKeyUtils.handleInput);
             BING_AUTOMATOR.elements.button.clearApiKey.addEventListener("click", BING_AUTOMATOR.apiKeyUtils.clearStoredKey);
-            console.log("Event listeners attached."); // 调试日志
+            console.log("Event listeners attached.");
 
-            // 再加载 Cookie 设置 (会触发 updateSettingsDisplay)
             BING_AUTOMATOR.cookies.loadSettings();
-            console.log("Cookie settings loaded."); // 调试日志
-
-            // 最后加载 API Key (可能再次触发 updateSettingsDisplay 或按钮状态更新)
+            console.log("Cookie settings loaded.");
             await BING_AUTOMATOR.apiKeyUtils.loadFromStorage();
-            console.log("API Key storage loaded."); // 调试日志
+            console.log("API Key storage loaded.");
 
             initSuccess = true;
 
@@ -603,7 +546,6 @@ const BING_AUTOMATOR = {
              console.error("Initialization failed:", error);
              alert(`页面初始化失败: ${error.message} 请刷新重试。`);
         } finally {
-            // 确保按钮最终状态正确
             if (BING_AUTOMATOR.elements.button.setApiKey) {
                 BING_AUTOMATOR.elements.button.setApiKey.disabled = BING_AUTOMATOR.apiKeyStored;
                 console.log(`Set API Key button final state (disabled: ${BING_AUTOMATOR.elements.button.setApiKey.disabled})`);

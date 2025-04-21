@@ -19,9 +19,73 @@ body {
     color: #BBBBBB !important; /* 浅灰色文字 (Android Studio 风格) - 使用 !important 覆盖 Bootstrap */
     display: flex;
     align-items: center; /* 垂直居中内容 */
-    padding-top: 2rem; /* 顶部留白 */
+    padding-top: 5rem; /* 增加顶部留白，为 API Key 区域腾出空间 */
     padding-bottom: 2rem; /* 底部留白 */
+    position: relative; /* 为绝对定位的 API Key 区域提供参照 */
 }
+
+/* 新增: API Key 输入区域样式 */
+#api-key-section {
+    position: absolute; /* 固定在视口 */
+    top: 10px; /* 距离顶部距离 */
+    right: 15px; /* 距离右侧距离 */
+    z-index: 1050; /* 确保在其他内容之上，但低于模态框背景 */
+    padding: 0.5rem;
+    background-color: rgba(60, 63, 65, 0.8); /* 半透明深灰色背景 */
+    border-radius: 5px;
+    display: flex; /* 使用 Flexbox 布局内部元素 */
+    align-items: center; /* 垂直居中对齐 */
+    gap: 0.5rem; /* 元素之间的间距 */
+}
+
+.api-key-label {
+    font-size: 0.75em; /* 稍小字体 */
+    color: #DDDDDD; /* 标签文字颜色 */
+    white-space: nowrap; /* 防止标签换行 */
+}
+
+.api-key-input {
+    background-color: #2B2B2B !important; /* 输入框背景 */
+    color: #BBBBBB !important; /* 输入框文字颜色 */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important; /* 边框颜色 */
+    max-width: 200px; /* 限制输入框最大宽度 */
+}
+
+/* 调整复选框和标签对齐 */
+#api-key-section .form-check {
+    padding-left: 0; /* 移除默认左内边距 */
+    margin-bottom: 0; /* 移除默认下外边距 */
+}
+#api-key-section .form-check-input {
+     margin-top: 0; /* 确保复选框垂直居中 */
+     border-color: rgba(255, 255, 255, 0.3);
+}
+#api-key-section .form-check-label {
+     padding-left: 0.3em; /* 复选框和标签文字间距 */
+}
+
+.api-key-button {
+    /* 按钮基本样式已由 Bootstrap 提供，可按需微调 */
+    font-size: 0.75rem !important; /* 按钮字体稍小 */
+    padding: 0.2rem 0.5rem !important; /* 按钮内边距调小 */
+}
+#btn-set-api-key {
+     background-color: #4A90E2 !important;
+     border-color: #4A90E2 !important;
+}
+#btn-set-api-key:hover {
+     background-color: #3A80D2 !important;
+     border-color: #3A80D2 !important;
+}
+#btn-clear-api-key {
+     color: #BBBBBB !important;
+     border-color: #6c757d !important;
+}
+#btn-clear-api-key:hover {
+     background-color: #6c757d !important;
+     color: white !important;
+}
+
 
 /* 内容包裹器 */
 #wrapper {
@@ -32,6 +96,8 @@ body {
     border-radius: 8px; /* 轻微圆角 */
     margin: auto; /* 水平居中 */
     text-align: center; /* 内部元素居中 */
+    position: relative; /* 确保在 API Key 区域下方 */
+    z-index: 1;
 }
 
 /* 标题样式 */
@@ -137,20 +203,34 @@ footer a:hover {
     color: #9e9e9e !important; /* 调整 muted 文本颜色 */
 }
 
+/* 调整弹出框内警告框样式 */
+#modal-help .alert {
+     border-radius: 4px;
+     margin-bottom: 1rem;
+}
+
 #modal-help .alert-danger {
     background-color: rgba(220, 53, 69, 0.1); /* 警告框背景色 */
     border-color: rgba(220, 53, 69, 0.3);
     color: #f8d7da; /* 警告框文字颜色 */
 }
-
 #modal-help .alert-danger strong.text-danger {
      color: #f5c6cb !important; /* 调整警告框中强调文字颜色 */
 }
-
 #modal-help .alert-danger a.alert-link {
     color: #f5c6cb; /* 调整警告框中链接颜色 */
     text-decoration: underline;
 }
+#modal-help .alert-warning { /* 新增 API Key 提示框样式 */
+    background-color: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.3);
+    color: #ffeeba;
+}
+#modal-help .alert-warning a.alert-link {
+    color: #ffeeba;
+    font-weight: bold;
+}
+
 
 #modal-help ol li {
     padding: 0.3em 0;

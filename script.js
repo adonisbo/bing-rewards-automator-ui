@@ -349,8 +349,68 @@ const BING_AUTOMATOR = {
                     } catch (e) { console.error("Error adding iframe:", e); }
                 }
             }
+        },
+        // --- 修改: 将 start 和 stop 函数移到 search 对象内部 ---
+        start: () => {
+            console.log("Start button clicked, executing BING_AUTOMATOR.search.start...");
+            if (BING_AUTOMATOR.search.isRunning) { console.log("Search is already running."); return; }
+            if (!BING_AUTOMATOR.elements.button.start || !BING_AUTOMATOR.elements.button.stop) { console.error("Start or Stop button not found."); return; }
+            if (!BING_AUTOMATOR.temporaryWordList || BING_AUTOMATOR.temporaryWordList.length === 0) { alert("请先设置有效的 Google AI API Key 并等待临时词库生成成功后再开始搜索。"); console.error("Cannot start search: Temporary word list is empty."); return; }
+
+            console.log("Starting auto search...");
+            BING_AUTOMATOR.search.isRunning = true;
+            BING_AUTOMATOR.availableWordsThisSession = [...BING_AUTOMATOR.temporaryWordList];
+            console.log(`Using a pool of ${BING_AUTOMATOR.availableWordsThisSession.length} words for this session.`);
+
+            BING_AUTOMATOR.elements.button.start.style.display = "none";
+            BING_AUTOMATOR.elements.button.stop.style.display = "inline-block";
+            if (BING_AUTOMATOR.search.currentTimeoutId) { clearTimeout(BING_AUTOMATOR.search.currentTimeoutId); }
+            BING_AUTOMATOR.search.engine.timer.stopDisplayUpdater();
+            BING_AUTOMATOR.executeSearch(1); // 调用顶层的 executeSearch
+        },
+
+        stop: (completed = false) => {
+            console.log(`Stopping auto search... Completed: ${completed}`);
+            BING_AUTOMATOR.search.isRunning = false; // 首先设置状态
+
+            if (BING_AUTOMATOR.search.currentTimeoutId) {
+                clearTimeout(BING_AUTOMATOR.search.currentTimeoutId);
+                BING_AUTOMATOR.search.currentTimeoutId = null;
+                console.log("Cleared scheduled next search timeout.");
+            }
+            if (BING_AUTOMATOR.search.searchWindow && !BING_AUTOMATOR.search.searchWindow.closed) {
+                BING_AUTOMATOR.search.searchWindow.close();
+                BING_AUTOMATOR.search.searchWindow = null;
+                console.log("Closed open search window (if any).");
+            }
+
+            BING_AUTOMATOR.search.engine.timer.stopDisplayUpdater(); // 停止计时器显示更新
+            console.log("Stopped timer display updater.");
+
+            // 更新按钮状态
+            if (BING_AUTOMATOR.elements.button.start && BING_AUTOMATOR.elements.button.stop) {
+                BING_AUTOMATOR.elements.button.start.style.display = "inline-block";
+                BING_AUTOMATOR.elements.button.stop.style.display = "none";
+                BING_AUTOMATOR.elements.button.start.disabled = (!BING_AUTOMATOR.temporaryWordList || BING_AUTOMATOR.temporaryWordList.length === 0);
+                console.log(`Stop function: Start button final state (disabled: ${BING_AUTOMATOR.elements.button.start.disabled})`);
+            }
+
+            // --- 修改: 根据 completed 参数决定后续操作 ---
+            if (completed) {
+                // 正常完成所有搜索次数
+                console.log("Search completed normally. Redirecting to points breakdown page...");
+                // 直接将当前窗口重定向到积分页面
+                window.location.href = "https://rewards.bing.com/status/pointsbreakdown";
+            } else {
+                // 手动点击停止按钮
+                console.log("Search stopped manually. Reloading page...");
+                // 手动停止时，刷新当前页面以重置状态
+                location.reload();
+            }
+            // ---------------------------------------------
         }
-    },
+        // --- 函数移动结束 ---
+    }, // search 对象结束
 
     // Google AI 词库生成
     generateTemporaryWordList: async () => {
@@ -427,7 +487,7 @@ const BING_AUTOMATOR = {
         }
     },
 
-    // 搜索执行
+    // 搜索执行 (修改: 调用 search.stop)
     executeSearch: (index = 1) => {
         console.log(`Entering executeSearch with index: ${index}, limit: ${BING_AUTOMATOR.search.limit}, isRunning: ${BING_AUTOMATOR.search.isRunning}`);
 
